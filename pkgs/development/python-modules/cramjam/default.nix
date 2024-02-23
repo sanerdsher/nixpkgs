@@ -1,6 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchFromGitHub
+, fetchpatch
 , rustPlatform
 , stdenv
 , libiconv
@@ -18,19 +19,26 @@
 
 buildPythonPackage rec {
   pname = "cramjam";
-  version = "2.6.2.post1";
+  version = "2.8.2";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "milesgranger";
     repo = "pyrus-cramjam";
     rev = "refs/tags/v${version}";
-    hash = "sha256-KU1JVNEQJadXNiIWTvI33N2NSq994xoKxcAGGezFjaI=";
+    hash = "sha256-BO35s7qOW4+l968I9qn9L1m2BtgRFNYUNlA7W1sctT8=";
   };
 
+  sourceRoot = "source/cramjam-python";
+
+  preBuild = ''
+    cargo metadata --offline # https://github.com/NixOS/nixpkgs/issues/261412
+    chmod +w ../ # used in build
+  '';
+
   cargoDeps = rustPlatform.fetchCargoTarball {
-    inherit src;
-    hash = "sha256-w1bEf+etLgR/YOyLmC3lFtO9fqAx8z2aul/XIKUQb5k=";
+    inherit src sourceRoot;
+    hash = "sha256-br522gHEMIgwZ6h670DiFmwmZoA6snu8qjGILL95d1M=";
   };
 
   nativeBuildInputs = with rustPlatform; [
@@ -53,12 +61,12 @@ buildPythonPackage rec {
     zstd
   ];
 
-  pytestFlagsArray = [
-    "--benchmark-disable"
-  ];
-
   disabledTestPaths = [
     "benchmarks/test_bench.py"
+  ];
+
+  pytestFlagsArray = [
+    "--benchmark-disable"
   ];
 
   pythonImportsCheck = [
